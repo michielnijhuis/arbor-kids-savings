@@ -401,6 +401,56 @@ function ageAtDate(dob, dateLabel){
   return Math.floor((now - dobDate) / (365.25 * 24 * 3600 * 1000));
 }
 
+// Parse date labels like "May '26", "Dec '24", "Mar '25" to a Date object (1st of month)
+function parseDateLabel(s){
+  if(!s) return null;
+  const months = {jan:0,feb:1,mrt:2,mar:2,maa:2,apr:3,mei:4,may:4,
+                  jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,dec:11};
+  const m = s.toLowerCase().match(/([a-z]{3})/);
+  const y = s.match(/(\d{2,4})/);
+  if(!m || !y) return null;
+  const mo = months[m[1].slice(0,3)];
+  if(mo == null) return null;
+  let yy = parseInt(y[1]);
+  if(yy < 100) yy += 2000;
+  return new Date(yy, mo, 1);
+}
+
+// Months between two date labels (b - a, can be negative)
+function monthsBetween(a, b){
+  const da = parseDateLabel(a), db = parseDateLabel(b);
+  if(!da || !db) return 0;
+  return (db.getFullYear() - da.getFullYear()) * 12 + (db.getMonth() - da.getMonth());
+}
+
+// Find idx of datapoint closest to 12 months before the latest. Returns null if no
+// earlier datapoint exists.
+function find12moIdx(){
+  const li = DATA.dates.length - 1;
+  if(li <= 0) return null;
+  let best = null, bestDiff = Infinity;
+  for(let i = 0; i < li; i++){
+    const months = monthsBetween(DATA.dates[i], DATA.dates[li]);
+    const diff = Math.abs(months - 12);
+    if(diff < bestDiff){ bestDiff = diff; best = i; }
+  }
+  return best;
+}
+
+// Annualised return between two indices, expressed as a percentage string with sign.
+function oneYearReturn(){
+  const li = DATA.dates.length - 1;
+  const fromIdx = find12moIdx();
+  if(fromIdx == null) return null;
+  const months = monthsBetween(DATA.dates[fromIdx], DATA.dates[li]);
+  const fromTotal = allTotal(fromIdx);
+  const toTotal = allTotal(li);
+  if(fromTotal <= 0 || months <= 0) return null;
+  const r = (toTotal - fromTotal) / fromTotal;
+  const annualised = Math.pow(1 + r, 12 / months) - 1;
+  return { pct: (annualised * 100), fromLabel: DATA.dates[fromIdx], months };
+}
+
 function yearsTo18(dob){
   const dobDate = new Date(dob);
   const age18 = new Date(dobDate);
@@ -501,15 +551,16 @@ const CHART_DEFAULTS = {
 function buildHeader(){
   const li = DATA.dates.length - 1;
   const total = allTotal(li);
-  const prev  = allTotal(0);
-  const growth = prev > 0 ? ((total - prev) / prev * 100).toFixed(1) : '—';
   const totalEst = KID_CONFIG.reduce((s, k) => s + projectedAt18(k.id), 0);
+  const yr = oneYearReturn();
+  const yrVal = yr ? (yr.pct >= 0 ? '+' : '') + yr.pct.toFixed(1) + '%' : '—';
+  const yrSub = yr ? `ann. since ${yr.fromLabel} (${yr.months}mo)` : 'insufficient history';
 
   document.getElementById('lastUpdateLabel').textContent = DATA.dates[li] || '—';
 
   const pills = [
     {lbl:'Total savings', val:fmtE(total), sub:DATA.dates[li]},
-    {lbl:'Growth since start', val:'+'+growth+'%', sub:DATA.dates[0]+' → '+DATA.dates[li]},
+    {lbl:'1-yr return', val:yrVal, sub:yrSub},
     {lbl:'Proj. total at 18', val:fmtE(totalEst), sub:'@ '+(DATA.returnRate||7)+'% p.a.'},
     {lbl:'Kids', val:'4', sub:'Aiden · Charlie · Jonathan · Josephine'},
   ];
@@ -882,8 +933,9 @@ function renderAll(){
 function buildPrintView(){
   const li = DATA.dates.length - 1;
   const total = allTotal(li);
-  const start = allTotal(0);
-  const growth = start > 0 ? ((total - start) / start * 100).toFixed(1) : '—';
+  const yr = oneYearReturn();
+  const yrVal = yr ? (yr.pct >= 0 ? '+' : '') + yr.pct.toFixed(1) + '%' : '—';
+  const yrSub = yr ? `ann. since ${yr.fromLabel} (${yr.months}mo)` : 'insufficient history';
   const totalEst = KID_CONFIG.reduce((s, k) => s + projectedAt18(k.id), 0);
   const printedAt = new Date().toLocaleString('nl-NL', {dateStyle:'long',timeStyle:'short'});
 
@@ -905,7 +957,7 @@ function buildPrintView(){
   // ── KPIs (colors mirror dashboard accents)
   html += `<div class="pv-kpis">
     <div class="pv-kpi k-amber"><div class="pv-kpi-lbl">Total savings</div><div class="pv-kpi-val">${fmtE(total)}</div><div class="pv-kpi-sub">${DATA.dates[li]}</div></div>
-    <div class="pv-kpi k-green"><div class="pv-kpi-lbl">Growth</div><div class="pv-kpi-val">+${growth}%</div><div class="pv-kpi-sub">${DATA.dates[0]} → ${DATA.dates[li]}</div></div>
+    <div class="pv-kpi k-green"><div class="pv-kpi-lbl">1-yr return</div><div class="pv-kpi-val">${yrVal}</div><div class="pv-kpi-sub">${yrSub}</div></div>
     <div class="pv-kpi k-cyan"><div class="pv-kpi-lbl">Proj. at age 18</div><div class="pv-kpi-val">${fmtE(totalEst)}</div><div class="pv-kpi-sub">BND Verwachte markt</div></div>
     <div class="pv-kpi k-blue"><div class="pv-kpi-lbl">Avg per kid</div><div class="pv-kpi-val">${fmtE(total/4)}</div><div class="pv-kpi-sub">across 4 kids</div></div>
   </div>`;
