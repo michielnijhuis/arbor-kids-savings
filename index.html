@@ -6,7 +6,7 @@
 <title>Nijhuis · Kids Savings</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#020c1a;--s1:#071428;--s2:#0a1c36;--s3:#0f2444;
@@ -133,6 +133,82 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
 /* ── PROGRESS BAR ── */
 .prog-wrap{background:var(--b1);border-radius:99px;height:5px;overflow:hidden}
 .prog-fill{height:100%;border-radius:99px}
+
+/* ══════════════════════════════════════════════════════════════
+   PRINT VIEW · Roamler/ACFO style
+   shown only when printing or via .print-preview class on body
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --r-bg:#f6f7f9;--r-panel:#ffffff;--r-panel2:#f9fafb;
+  --r-ink:#0c1220;--r-muted:#5b6676;--r-teal:#00b5a5;--r-border:#e4e7ec;
+  --r-sans:'Inter','Helvetica Neue',Arial,sans-serif;
+  --r-mono:'JetBrains Mono','SF Mono',monospace;
+}
+#printView{display:none}
+
+.print-preview body,body.print-preview{background:var(--r-bg)}
+body.print-preview #printView{display:block;background:var(--r-bg);color:var(--r-ink);font-family:var(--r-sans);padding:24px;max-width:820px;margin:0 auto}
+body.print-preview .hdr,body.print-preview .content,body.print-preview .modal-overlay,body.print-preview .save-flash{display:none}
+
+@media print{
+  @page{size:A4;margin:14mm}
+  html,body{background:#fff!important;color:var(--r-ink)!important}
+  body{padding:0!important;font-family:var(--r-sans)}
+  .hdr,.content,.modal-overlay,.save-flash{display:none!important}
+  #printView{display:block!important;background:#fff;color:var(--r-ink);font-family:var(--r-sans)}
+  .pv-card,.pv-panel,.pv-kpi{break-inside:avoid;page-break-inside:avoid}
+  .pv-page{break-after:page;page-break-after:always}
+  .pv-page:last-child{break-after:auto;page-break-after:auto}
+}
+
+#printView *{box-sizing:border-box}
+.pv-hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--r-teal);padding-bottom:14px;margin-bottom:18px}
+.pv-brand{font-family:var(--r-mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--r-muted);margin-bottom:4px}
+.pv-title{font-size:22px;font-weight:700;color:var(--r-ink);letter-spacing:-.4px;line-height:1.1}
+.pv-sub{font-family:var(--r-mono);font-size:10px;color:var(--r-muted);margin-top:4px}
+.pv-meta{font-family:var(--r-mono);font-size:9px;color:var(--r-muted);text-align:right;line-height:1.5}
+.pv-meta strong{color:var(--r-ink);font-weight:600}
+
+.pv-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.pv-kpi{background:var(--r-panel);border:1px solid var(--r-border);border-radius:6px;padding:10px 12px;border-top:2px solid var(--r-teal)}
+.pv-kpi-lbl{font-family:var(--r-mono);font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--r-muted);margin-bottom:5px}
+.pv-kpi-val{font-family:var(--r-mono);font-size:18px;font-weight:600;color:var(--r-ink);letter-spacing:-.5px;line-height:1}
+.pv-kpi-sub{font-family:var(--r-mono);font-size:8px;color:var(--r-muted);margin-top:3px}
+
+.pv-section{margin-bottom:16px}
+.pv-section-title{font-family:var(--r-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--r-muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--r-border)}
+
+.pv-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pv-card{background:var(--r-panel);border:1px solid var(--r-border);border-radius:6px;padding:12px 14px;border-left:3px solid var(--r-teal)}
+.pv-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.pv-card-name{font-size:13px;font-weight:700;color:var(--r-ink)}
+.pv-card-dob{font-family:var(--r-mono);font-size:8px;color:var(--r-muted);margin-top:1px}
+.pv-card-total{font-family:var(--r-mono);font-size:18px;font-weight:600;color:var(--r-ink);letter-spacing:-.4px}
+.pv-card-growth{font-family:var(--r-mono);font-size:9px;color:var(--r-teal);margin-top:1px}
+.pv-card-rows{margin-top:8px}
+.pv-card-row{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px dotted var(--r-border)}
+.pv-card-row:last-child{border-bottom:none}
+.pv-card-lbl{color:var(--r-muted)}
+.pv-card-val{font-family:var(--r-mono);color:var(--r-ink);font-weight:500}
+.pv-card-est{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--r-border)}
+.pv-card-est-lbl{font-size:10px;color:var(--r-muted);font-style:italic}
+.pv-card-est-val{font-family:var(--r-mono);font-size:12px;font-weight:600;color:var(--r-teal)}
+
+.pv-tbl{width:100%;border-collapse:collapse;font-size:10px;background:var(--r-panel);border:1px solid var(--r-border);border-radius:6px;overflow:hidden}
+.pv-tbl th{background:var(--r-panel2);padding:6px 9px;font-family:var(--r-mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--r-muted);font-weight:500;text-align:right;border-bottom:1px solid var(--r-border)}
+.pv-tbl th:first-child{text-align:left}
+.pv-tbl td{padding:5px 9px;font-family:var(--r-mono);text-align:right;border-bottom:1px solid var(--r-border)}
+.pv-tbl td:first-child{text-align:left;font-family:var(--r-sans);color:var(--r-muted)}
+.pv-tbl tr.pv-kid-row td{background:var(--r-panel2);font-family:var(--r-sans);font-size:10px;font-weight:600;color:var(--r-ink);text-transform:none;letter-spacing:0}
+.pv-tbl tr.pv-total-row td{background:#f0fafa;font-weight:600;color:var(--r-ink);border-top:1px solid var(--r-teal)}
+.pv-tbl tr.pv-grand-row td{background:var(--r-teal);color:#fff;font-weight:700}
+.pv-acct{font-family:var(--r-mono);font-size:8px;color:var(--r-muted);margin-left:6px}
+
+.pv-footer{margin-top:20px;padding-top:10px;border-top:1px solid var(--r-border);display:flex;justify-content:space-between;font-family:var(--r-mono);font-size:8px;color:var(--r-muted)}
+
+/* Export button on screen */
+.export-btn{padding:6px 13px;border-radius:6px;border:1px solid var(--b1);background:transparent;color:var(--t3);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-left:6px;transition:all .15s}
+.export-btn:hover{border-color:var(--r-teal);color:var(--r-teal)}
 </style>
 </head>
 <body>
@@ -170,9 +246,15 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
       <button class="tab-btn" onclick="switchTab('josephine')">Josephine</button>
       <button class="tab-btn" onclick="switchTab('history')">History</button>
     </div>
-    <button class="ctrl-btn primary" onclick="openEditor()">+ Update balances</button>
+    <div style="display:flex;gap:6px">
+      <button class="export-btn" onclick="exportPDF()" title="Print/Save as PDF in Roamler style">⇩ Export PDF</button>
+      <button class="ctrl-btn primary" onclick="openEditor()">+ Update balances</button>
+    </div>
   </div>
 </div>
+
+<!-- ══ PRINT VIEW (Roamler/ACFO style) ══ -->
+<div id="printView"></div>
 
 <div class="content">
 
@@ -795,6 +877,144 @@ function renderAll(){
     else { const cfg = KID_CONFIG.find(k => k.id === id); if(cfg) buildKidDetailTab(cfg); }
   }
 }
+
+// ══ PDF EXPORT (Roamler/ACFO style) ════════════════════════
+function buildPrintView(){
+  const li = DATA.dates.length - 1;
+  const total = allTotal(li);
+  const start = allTotal(0);
+  const growth = start > 0 ? ((total - start) / start * 100).toFixed(1) : '—';
+  const totalEst = KID_CONFIG.reduce((s, k) => s + projectedAt18(k.id), 0);
+  const printedAt = new Date().toLocaleString('nl-NL', {dateStyle:'long',timeStyle:'short'});
+
+  // ── Header
+  let html = `
+    <div class="pv-hdr">
+      <div>
+        <div class="pv-brand">Nijhuis Family Office</div>
+        <div class="pv-title">Kids Savings · BrandNewDay</div>
+        <div class="pv-sub">Overview as of ${DATA.dates[li]}</div>
+      </div>
+      <div class="pv-meta">
+        <div><strong>4 kids</strong> · 12 BND accounts</div>
+        <div>Printed ${printedAt}</div>
+      </div>
+    </div>
+  `;
+
+  // ── KPIs
+  html += `<div class="pv-kpis">
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Total savings</div><div class="pv-kpi-val">${fmtE(total)}</div><div class="pv-kpi-sub">${DATA.dates[li]}</div></div>
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Growth</div><div class="pv-kpi-val">+${growth}%</div><div class="pv-kpi-sub">${DATA.dates[0]} → ${DATA.dates[li]}</div></div>
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Proj. at age 18</div><div class="pv-kpi-val">${fmtE(totalEst)}</div><div class="pv-kpi-sub">BND Verwachte markt</div></div>
+    <div class="pv-kpi"><div class="pv-kpi-lbl">Avg per kid</div><div class="pv-kpi-val">${fmtE(total/4)}</div><div class="pv-kpi-sub">across 3 accounts</div></div>
+  </div>`;
+
+  // ── Per-kid cards
+  html += `<div class="pv-section"><div class="pv-section-title">Per kid</div><div class="pv-cards">`;
+  KID_CONFIG.forEach(cfg => {
+    const kd = DATA.kids[cfg.id];
+    const kt = kidTotal(cfg.id, li);
+    const kPrev = kidTotal(cfg.id, 0);
+    const kGrow = kPrev > 0 ? '+'+((kt-kPrev)/kPrev*100).toFixed(1)+'%' : '—';
+    const est = projectedAt18(cfg.id);
+    const age = Math.floor((new Date() - new Date(cfg.dob)) / (365.25*24*3600*1000));
+    const yrs18 = yearsTo18(cfg.dob);
+
+    let rows = '';
+    cfg.accounts.forEach((acc, i) => {
+      const v = kd.accounts[i] ? kd.accounts[i][li] : null;
+      rows += `<div class="pv-card-row">
+        <span class="pv-card-lbl">${acc.label}</span>
+        <span class="pv-card-val">${v != null ? fmtE(v) : '—'}</span>
+      </div>`;
+    });
+
+    html += `<div class="pv-card">
+      <div class="pv-card-hdr">
+        <div>
+          <div class="pv-card-name">${cfg.name}</div>
+          <div class="pv-card-dob">b. ${cfg.dob} · age ${age} · ${yrs18.toFixed(1)}y to 18</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pv-card-total">${fmtE(kt)}</div>
+          <div class="pv-card-growth">${kGrow}</div>
+        </div>
+      </div>
+      <div class="pv-card-rows">${rows}</div>
+      <div class="pv-card-est">
+        <span class="pv-card-est-lbl">Projected at 18 (BND)</span>
+        <span class="pv-card-est-val">${fmtE(est)}</span>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // ── Account-level breakdown table
+  html += `<div class="pv-section"><div class="pv-section-title">Account breakdown · ${DATA.dates[li]}</div>
+    <table class="pv-tbl">
+      <thead><tr>
+        <th>Account</th>
+        <th>${DATA.dates[0]}</th>
+        <th>${DATA.dates[li]}</th>
+        <th>Δ</th>
+        <th>BND est. at 18</th>
+      </tr></thead>
+      <tbody>`;
+  KID_CONFIG.forEach(cfg => {
+    const kd = DATA.kids[cfg.id];
+    html += `<tr class="pv-kid-row"><td colspan="5">${cfg.name}</td></tr>`;
+    cfg.accounts.forEach((acc, i) => {
+      const vals = kd.accounts[i] || [];
+      const v0 = vals[0], v1 = vals[li];
+      const d = (v0 != null && v1 != null) ? '+'+(((v1-v0)/v0)*100).toFixed(1)+'%' : '—';
+      const est = kd.estAt18?.[i];
+      html += `<tr>
+        <td>${acc.label}<span class="pv-acct">${acc.acct}</span></td>
+        <td>${v0 != null ? fmtE(v0) : '—'}</td>
+        <td>${v1 != null ? fmtE(v1) : '—'}</td>
+        <td>${d}</td>
+        <td>${est != null ? fmtE(est) : '—'}</td>
+      </tr>`;
+    });
+    const t0 = kidTotal(cfg.id, 0), t1 = kidTotal(cfg.id, li);
+    const tD = t0 > 0 ? '+'+(((t1-t0)/t0)*100).toFixed(1)+'%' : '—';
+    const tEst = projectedAt18(cfg.id);
+    html += `<tr class="pv-total-row">
+      <td>${cfg.name} total</td>
+      <td>${fmtE(t0)}</td>
+      <td>${fmtE(t1)}</td>
+      <td>${tD}</td>
+      <td>${fmtE(tEst)}</td>
+    </tr>`;
+  });
+  const g0 = allTotal(0), g1 = allTotal(li);
+  const gD = g0 > 0 ? '+'+(((g1-g0)/g0)*100).toFixed(1)+'%' : '—';
+  const gEst = KID_CONFIG.reduce((s,k)=>s+projectedAt18(k.id),0);
+  html += `<tr class="pv-grand-row">
+    <td>Grand total</td>
+    <td>${fmtE(g0)}</td>
+    <td>${fmtE(g1)}</td>
+    <td>${gD}</td>
+    <td>${fmtE(gEst)}</td>
+  </tr>
+  </tbody></table></div>`;
+
+  html += `<div class="pv-footer">
+    <span>Source: BrandNewDay waardeoverzichten</span>
+    <span>arbor-kids-savings.vercel.app</span>
+  </div>`;
+
+  document.getElementById('printView').innerHTML = html;
+}
+
+function exportPDF(){
+  buildPrintView();
+  // Small delay so Chart.js doesn't fight the print layout
+  setTimeout(() => window.print(), 50);
+}
+
+window.addEventListener('beforeprint', buildPrintView);
 
 // ══ INIT ══════════════════════════════════════════════════
 loadData();
