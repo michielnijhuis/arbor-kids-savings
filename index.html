@@ -207,8 +207,9 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
 .pv-footer{margin-top:10px;padding-top:7px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;font-family:var(--mono);font-size:7.5px;color:var(--t4)}
 
 /* Export button on screen */
-.export-btn{padding:6px 13px;border-radius:6px;border:1px solid var(--b1);background:transparent;color:var(--t3);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);margin-left:6px;transition:all .15s}
+.export-btn{padding:6px 13px;border-radius:6px;border:1px solid var(--b1);background:rgba(255,255,255,.04);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s;backdrop-filter:blur(4px)}
 .export-btn:hover{border-color:var(--green);color:var(--green)}
+.export-btn-fixed{position:fixed;top:12px;right:12px;z-index:50}
 </style>
 </head>
 <body>
@@ -246,12 +247,10 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
       <button class="tab-btn" onclick="switchTab('josephine')">Josephine</button>
       <button class="tab-btn" onclick="switchTab('history')">History</button>
     </div>
-    <div style="display:flex;gap:6px">
-      <button class="export-btn" onclick="exportPDF()" title="Print/Save as PDF in Roamler style">⇩ Export PDF</button>
-      <button class="ctrl-btn primary" onclick="openEditor()">+ Update balances</button>
-    </div>
+    <button class="ctrl-btn primary" onclick="openEditor()">+ Update balances</button>
   </div>
 </div>
+<button class="export-btn export-btn-fixed" onclick="exportPDF()" title="Download PDF">⇩ Export PDF</button>
 
 <!-- ══ PRINT VIEW (Roamler/ACFO style) ══ -->
 <div id="printView"></div>
