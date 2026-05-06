@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nijhuis · Kids Savings</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1011,8 +1012,36 @@ function buildPrintView(){
 
 function exportPDF(){
   buildPrintView();
-  // Small delay so Chart.js doesn't fight the print layout
-  setTimeout(() => window.print(), 50);
+  // Render to PDF directly via html2pdf — deterministic, no browser print dialog
+  const el = document.getElementById('printView');
+  // Temporarily reveal so html2canvas sees it
+  el.style.display = 'block';
+  el.style.background = '#020c1a';
+  el.style.color = '#e8f0f8';
+  el.style.padding = '9mm 10mm';
+  el.style.width = '210mm';
+  el.style.minHeight = '297mm';
+  el.style.position = 'fixed';
+  el.style.left = '-10000px';
+  el.style.top = '0';
+
+  const lastDate = (DATA.dates[DATA.dates.length - 1] || 'latest').replace(/['"\s]/g, '');
+  const filename = `Kids_Savings_${lastDate}.pdf`;
+
+  html2pdf().set({
+    margin: 0,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, backgroundColor: '#020c1a', useCORS: true, windowWidth: 794 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(el).save().then(() => {
+    el.style.cssText = '';
+  }).catch(err => {
+    console.error('PDF export failed:', err);
+    el.style.cssText = '';
+    // Fallback to browser print if html2pdf fails
+    window.print();
+  });
 }
 
 window.addEventListener('beforeprint', buildPrintView);
