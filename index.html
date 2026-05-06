@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nijhuis · Kids Savings</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020c1a;--s1:#071428;--s2:#0a1c36;--s3:#0f2444;
+  --b1:#1a3050;--b2:#243d63;--b3:#2e4f7a;
+  --t1:#e8f0f8;--t2:#8aa8c8;--t3:#4a6880;--t4:#2a4060;
+  --blue:#4d9ef8;--green:#2dd4a0;--amber:#f4b942;--red:#f06868;
+  --violet:#9b7ff4;--cyan:#3ecfcf;--orange:#fb923c;--pink:#f472b6;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100vh;padding-bottom:60px}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(180deg,#030f20 0%,#071428 100%);border-bottom:1px solid var(--b1);padding:20px 28px 0}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.brand{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--t3);text-transform:uppercase;margin-bottom:3px}
+.title{font-size:20px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.hdr-kpis{display:flex;gap:8px;flex-wrap:wrap}
+.hk{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px 14px;min-width:110px}
+.hk-lbl{font-size:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.hk-val{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--t1);letter-spacing:-1px;line-height:1}
+.hk-sub{font-size:9px;font-family:var(--mono);color:var(--t4);margin-top:2px}
+
+/* ── PLAT NAV ── */
+.plat-nav{display:flex;align-items:center;gap:0;border-top:1px solid var(--b1);padding:0 28px;height:32px;background:var(--bg)}
+
+/* ── TABS ── */
+.tabs-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap}
+.tab-btn{padding:8px 16px;border-radius:6px 6px 0 0;border:1px solid var(--b1);border-bottom:none;background:transparent;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.tab-btn.active{background:var(--bg);color:var(--t1)}
+.tab-btn:hover:not(.active){color:var(--t2)}
+.ctrl-btn{padding:6px 13px;border-radius:6px;border:1px solid var(--b1);background:transparent;color:var(--t3);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.ctrl-btn:hover{border-color:var(--green);color:var(--green)}
+.ctrl-btn.primary{border-color:var(--blue);color:var(--blue);background:rgba(77,158,248,.07)}
+
+/* ── CONTENT ── */
+.content{padding:20px 28px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.g2,.g4{grid-template-columns:1fr}}
+
+/* ── PANEL ── */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:16px;margin-bottom:14px}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.panel-title{font-size:10px;font-family:var(--mono);font-weight:500;color:var(--t3);letter-spacing:.1em;text-transform:uppercase}
+.accent{display:inline-block;width:3px;height:12px;border-radius:99px;margin-right:7px;vertical-align:middle}
+
+/* ── KID CARD ── */
+.kid-card{background:var(--s2);border:1px solid var(--b1);border-radius:10px;overflow:hidden;transition:border-color .15s;cursor:pointer}
+.kid-card:hover{border-color:var(--b2)}
+.kid-stripe{height:3px}
+.kid-body{padding:14px 16px}
+.kid-name{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.kid-dob{font-size:9px;font-family:var(--mono);color:var(--t3);margin-bottom:12px}
+.kid-total{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.kid-growth{font-size:10px;font-family:var(--mono);color:var(--green);margin-bottom:12px}
+.kid-acc{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(26,48,80,.3);font-size:10px}
+.kid-acc:last-child{border-bottom:none}
+.kid-acc-lbl{color:var(--t3)}
+.kid-acc-val{font-family:var(--mono);color:var(--t2);font-weight:600}
+.kid-est{margin-top:10px;padding-top:10px;border-top:1px solid rgba(26,48,80,.4);display:flex;justify-content:space-between;align-items:baseline}
+.kid-est-lbl{font-size:9px;font-family:var(--mono);color:var(--t3)}
+.kid-est-val{font-size:13px;font-weight:700;font-family:var(--mono)}
+.kid-age18{font-size:9px;font-family:var(--mono);color:var(--t4);text-align:right;margin-top:2px}
+
+/* ── STAT ROWS ── */
+.stat-r{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(26,48,80,.3)}
+.stat-r:last-child{border-bottom:none}
+.stat-lbl{font-size:11px;color:var(--t3)}
+.stat-val{font-size:12px;font-weight:600;font-family:var(--mono);color:var(--t1)}
+
+/* ── ACCOUNT NUMBER BADGE ── */
+.acct-badge{font-size:9px;font-family:var(--mono);color:var(--t4);letter-spacing:.05em}
+
+/* ── HISTORY TABLE ── */
+.hist-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hist-table{border-collapse:collapse;font-size:11px;min-width:600px;width:100%}
+.hist-table th{padding:7px 10px;font-size:9px;font-family:var(--mono);font-weight:500;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--b1);text-align:right;white-space:nowrap}
+.hist-table th:first-child{text-align:left;min-width:160px}
+.hist-table td{padding:5px 10px;border-bottom:1px solid rgba(26,48,80,.25);font-family:var(--mono);font-size:11px;text-align:right;white-space:nowrap}
+.hist-table td:first-child{text-align:left;color:var(--t3);font-size:10px}
+.hist-table tr.total-row td{background:rgba(77,158,248,.04);font-weight:700;color:var(--t1);border-top:1px solid var(--b2)}
+.hist-table tr.kid-section td{background:var(--s2);font-size:9px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.08em;padding:6px 10px}
+
+/* ── EDITOR MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;overflow-y:auto;padding:20px}
+.modal-overlay.open{display:flex;align-items:flex-start;justify-content:center}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:10px;padding:24px;max-width:540px;width:100%;margin:auto}
+.modal-title{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:16px}
+.modal-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--b1)}
+.modal-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.modal-kid-title{font-size:11px;font-weight:700;margin-bottom:10px}
+.modal-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;gap:10px}
+.modal-lbl{font-size:10px;color:var(--t3);flex:1}
+.modal-lbl small{display:block;font-size:9px;color:var(--t4);margin-top:1px}
+.modal-input{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:5px 8px;color:var(--t1);font-family:var(--mono);font-size:12px;outline:none;width:110px;text-align:right;transition:border-color .15s}
+.modal-input:focus{border-color:var(--blue)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-primary{padding:8px 20px;border-radius:6px;border:1px solid var(--blue);background:rgba(77,158,248,.1);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.btn-primary:hover{background:rgba(77,158,248,.2)}
+.btn-ghost{padding:8px 14px;border-radius:6px;border:1px solid var(--b1);background:transparent;color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--sans)}
+.new-date-notice{background:rgba(244,185,66,.07);border:1px solid rgba(244,185,66,.2);border-radius:5px;padding:6px 10px;font-size:10px;font-family:var(--mono);color:var(--amber);margin-top:6px;display:none}
+
+/* ── RETURN RATE INPUT ── */
+.return-input{background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:4px 8px;color:var(--t1);font-family:var(--mono);font-size:12px;outline:none;width:60px;text-align:right;display:inline-block}
+.return-input:focus{border-color:var(--blue)}
+
+/* ── CHART ── */
+.chart-h240{position:relative;height:240px}
+.chart-h200{position:relative;height:200px}
+
+/* ── SYNC BADGE ── */
+.sync-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:9px;font-family:var(--mono);margin-top:5px;border:1px solid}
+.sync-ok{background:rgba(45,212,160,.07);border-color:rgba(45,212,160,.2);color:var(--green);cursor:pointer}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}.pulse{animation:pulse 2s infinite}
+
+/* ── SAVE FLASH ── */
+.save-flash{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--green);border-radius:7px;padding:10px 18px;color:var(--green);font-size:12px;font-family:var(--mono);opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.save-flash.show{opacity:1}
+
+/* ── PROGRESS BAR ── */
+.prog-wrap{background:var(--b1);border-radius:99px;height:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="brand">Nijhuis Finance</div>
+      <div class="title">Kids Savings · BrandNewDay</div>
+      <div class="sync-badge sync-ok" id="cfSyncBadge" onclick="writeCFFeeds()" title="Click to push to Cash Flow">
+        <span class="sync-dot pulse"></span>
+        <span id="cfSyncLabel">Push to Cash Flow</span>
+      </div>
+    </div>
+    <div class="hdr-kpis" id="hdrKpis"></div>
+  </div>
+  <div class="plat-nav">
+    <button onclick="if(window.parent&&window.parent!==window){window.parent.showOv();}else{window.location.href='index.html';}" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:0 10px 0 0;color:var(--t3);font-size:10px;font-family:var(--mono);letter-spacing:.05em;border-right:1px solid var(--b1);margin-right:12px;height:32px;transition:color .15s" onmouseover="this.style.color='var(--t2)'" onmouseout="this.style.color='var(--t3)'">
+      <span style="font-size:14px">←</span> Dashboard
+    </button>
+    <span style="font-size:10px;font-family:var(--mono);color:var(--t4)">Nijhuis Finance Platform</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <label style="font-size:9px;font-family:var(--mono);color:var(--t3)">Return rate
+        <input class="return-input" id="returnRate" type="number" step="0.1" value="7.0" onchange="persist(DATA);renderAll()">
+        <span style="font-size:9px;color:var(--t4)">%</span>
+      </label>
+    </div>
+  </div>
+  <div class="tabs-row">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+      <button class="tab-btn" onclick="switchTab('aiden')">Aiden</button>
+      <button class="tab-btn" onclick="switchTab('charlie')">Charlie</button>
+      <button class="tab-btn" onclick="switchTab('jonathan')">Jonathan</button>
+      <button class="tab-btn" onclick="switchTab('josephine')">Josephine</button>
+      <button class="tab-btn" onclick="switchTab('history')">History</button>
+    </div>
+    <button class="ctrl-btn primary" onclick="openEditor()">+ Update balances</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ══ OVERVIEW ══ -->
+<div class="tab-panel active" id="tab-overview">
+  <div class="g4" id="kidCards"></div>
+  <div class="g2">
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">Total savings over time</span></div>
+      <div class="chart-h240"><canvas id="chartTotal"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><span class="panel-title">Projected value at age 18</span></div>
+      <div class="chart-h240"><canvas id="chartProjected"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr">
+      <span class="panel-title">Summary · <span id="lastUpdateLabel">—</span></span>
+    </div>
+    <div id="summaryTable"></div>
+  </div>
+</div>
+
+<!-- ══ KID DETAIL TABS ══ -->
+<div class="tab-panel" id="tab-aiden"></div>
+<div class="tab-panel" id="tab-charlie"></div>
+<div class="tab-panel" id="tab-jonathan"></div>
+<div class="tab-panel" id="tab-josephine"></div>
+
+<!-- ══ HISTORY ══ -->
+<div class="tab-panel" id="tab-history">
+  <div class="panel" style="padding:0;overflow:hidden">
+    <div class="hist-wrap">
+      <table class="hist-table" id="histTable"></table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ══ EDITOR MODAL ══ -->
+<div class="modal-overlay" id="editorModal">
+  <div class="modal">
+    <div class="modal-title">Update Account Balances</div>
+    <div class="modal-section">
+      <div class="modal-row">
+        <span class="modal-lbl">Date of this update<small>e.g. "Mar '26" or "31 Mar 2026"</small></span>
+        <input class="modal-input" id="ed_date" style="width:130px" oninput="checkNewDate()">
+      </div>
+      <div class="new-date-notice" id="newDateNotice">📌 New date point — will be added to charts</div>
+    </div>
+    <div id="editorFields"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeEditor()">Cancel</button>
+      <button class="btn-primary" onclick="saveEditor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-flash" id="saveFlash">✓ Saved</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const LS_KEY     = 'bnd_kids_v2';
+const INV_CF_KEY = 'nijhuis_inv_cf_feeds';
+const INV_CF_TS  = 'nijhuis_inv_cf_feeds_ts';
+
+// Kid config — DOBs and account numbers from BrandNewDay
+const KID_CONFIG = [
+  { id:'aiden',     name:'Aiden',     dob:'2010-10-01', color:'#f4b942',
+    accounts:[
+      { label:'Papa & Mama', acct:'NL95BNDA0100009241', monthly:75 },
+      { label:'Opa & Oma',   acct:'NL89BNDA0100009252', monthly:null },
+      { label:'Tanya',       acct:'NL62BNDA0100009253', monthly:null },
+    ]},
+  { id:'charlie',   name:'Charlie',   dob:'2012-11-04', color:'#2dd4a0',
+    accounts:[
+      { label:'Papa & Mama', acct:'NL68BNDA0100009242', monthly:75 },
+      { label:'Opa & Oma',   acct:'NL35BNDA0100009254', monthly:null },
+      { label:'Tanya',       acct:'NL08BNDA0100009255', monthly:null },
+    ]},
+  { id:'jonathan',  name:'Jonathan',  dob:'2018-07-05', color:'#9b7ff4',
+    accounts:[
+      { label:'Papa & Mama', acct:'NL93BNDA0100009277', monthly:75 },
+      { label:'Opa & Oma',   acct:'NL23BNDA0100009276', monthly:null },
+      { label:'Tanya',       acct:'NL66BNDA0100009278', monthly:null },
+    ]},
+  { id:'josephine', name:'Josephine', dob:'2020-06-06', color:'#f472b6',
+    accounts:[
+      { label:'Papa & Mama', acct:'NL25BNDA0100009434', monthly:75 },
+      { label:'Opa & Oma',   acct:'NL52BNDA0100009433', monthly:null },
+      { label:'Tanya',       acct:'NL95BNDA0100009435', monthly:null },
+    ]},
+];
+
+// ══ DEFAULT DATA (latest from BND PDFs 06-05-2026) ════════
+const DEFAULT_DATA = {
+  returnRate: 7.0,
+  dates: ["Dec '24", "Mar '25", "Sep '25", "Oct '25", "Feb '26", "May '26"],
+  kids: {
+    aiden:     { estAt18: [21051, 11729, 10773], accounts: [[12667,13316,14419,14763,15779,16372],[8519,8705,9308,9490,10004,10252],[7467,7625,8129,8787,9207,9417]] },
+    charlie:   { estAt18: [21855, 12258, 12317], accounts: [[10480,11082,12034,12331,13222,13751],[8082,8260,8832,9005,9484,9720], [7769,7933,8456,8614,9550,9767]] },
+    jonathan:  { estAt18: [26851, 10243,  9468], accounts: [[6674,7194,7878,8094,8775,9196],  [5195,5356,5762,5870,6153,6295],  [4441,4533,5349,5444,5697,5819]] },
+    josephine: { estAt18: [27810, 10291,  7322], accounts: [[4976,5459,6028,6209,6798,7171],  [4755,4907,5286,5386,5646,5778],  [3008,3069,3787,3853,4028,4111]] },
+  },
+};
+
+// ══ DATA LAYER ════════════════════════════════════════════════
+let DATA;
+function loadData(){
+  try { const s=localStorage.getItem(LS_KEY); if(s){ DATA=JSON.parse(s); return; } } catch(e){}
+  DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function persist(d){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){}
+}
+
+// ══ HELPERS ══════════════════════════════════════════════════
+const fmtE = v => {
+  if(v==null||isNaN(v)) return '—';
+  const n=Math.round(Math.abs(v));
+  return (v<0?'−':'')+'€'+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+};
+const fmtK = v => { const k=Math.round(v/1000); return '€'+Math.abs(k)+'K'; };
+
+function kidTotal(kidId, dateIdx){
+  const kd = DATA.kids[kidId];
+  if(!kd) return 0;
+  const idx = dateIdx !== undefined ? dateIdx : DATA.dates.length - 1;
+  return kd.accounts.reduce((s, acc) => s + (acc[idx] || 0), 0);
+}
+
+function allTotal(dateIdx){
+  return KID_CONFIG.reduce((s, k) => s + kidTotal(k.id, dateIdx), 0);
+}
+
+function ageAtDate(dob, dateLabel){
+  // Rough age calculation from DOB string
+  const dobDate = new Date(dob);
+  const now = new Date();
+  return Math.floor((now - dobDate) / (365.25 * 24 * 3600 * 1000));
+}
+
+function yearsTo18(dob){
+  const dobDate = new Date(dob);
+  const age18 = new Date(dobDate);
+  age18.setFullYear(dobDate.getFullYear() + 18);
+  const now = new Date();
+  return Math.max(0, (age18 - now) / (365.25 * 24 * 3600 * 1000));
+}
+
+function projectedAt18Account(kidId, accIdx){
+  // Use BND's own per-account estimate if available, else compute
+  const kd = DATA.kids[kidId];
+  const est = Array.isArray(kd.estAt18) ? kd.estAt18[accIdx] : null;
+  if(est) return est;
+  // Fallback: compound growth of current balance
+  const r   = (parseFloat(document.getElementById('returnRate')?.value) || DATA.returnRate || 7) / 100;
+  const cfg = KID_CONFIG.find(k => k.id === kidId);
+  const yrs = yearsTo18(cfg.dob);
+  const li  = DATA.dates.length - 1;
+  const bal = (kd.accounts[accIdx] || [])[li] || 0;
+  return Math.round(bal * Math.pow(1 + r, yrs));
+}
+
+function projectedAt18(kidId){
+  const kd  = DATA.kids[kidId];
+  const cfg = KID_CONFIG.find(k => k.id === kidId);
+  // Sum of per-account BND estimates (or computed fallback)
+  if(Array.isArray(kd.estAt18) && kd.estAt18.some(v=>v)){
+    return kd.estAt18.reduce((s,v) => s+(v||0), 0);
+  }
+  // Legacy: single estAt18 number
+  if(typeof kd.estAt18 === 'number') return kd.estAt18;
+  // Compute from current balances
+  const r   = (parseFloat(document.getElementById('returnRate')?.value) || DATA.returnRate || 7) / 100;
+  const yrs = yearsTo18(cfg.dob);
+  const li  = DATA.dates.length - 1;
+  const monthly = 75;
+  const monthlyFV = r > 0 ? monthly * 12 * ((Math.pow(1+r,yrs)-1)/r) : monthly*12*yrs;
+  return kd.accounts.reduce((s, acc) => s + Math.round((acc[li]||0)*Math.pow(1+r,yrs)), Math.round(monthlyFV));
+}
+
+function flashSave(){
+  const el = document.getElementById('saveFlash');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1500);
+}
+
+// ══ CF FEED ════════════════════════════════════════════════
+function writeCFFeeds(){
+  try {
+    const total = allTotal();
+    const feeds = JSON.parse(localStorage.getItem(INV_CF_KEY) || '{}');
+    // Use latest date as month for CF
+    const lastDate = DATA.dates[DATA.dates.length - 1];
+    const ym = parseDateToYM(lastDate);
+    feeds['kids_saxo'] = {
+      value_eur: total,
+      date_ym:   ym || '2026-02',
+      label:     'Kids BrandNewDay · all accounts',
+    };
+    localStorage.setItem(INV_CF_KEY, JSON.stringify(feeds));
+    localStorage.setItem(INV_CF_TS, new Date().toISOString());
+    const el = document.getElementById('cfSyncLabel');
+    if(el) el.textContent = 'Synced to CF · ' + fmtE(total) + ' · ' + lastDate;
+  } catch(e){ console.error('writeCFFeeds:', e); }
+}
+
+function parseDateToYM(str){
+  if(!str) return null;
+  const months = {jan:1,feb:2,mrt:3,mar:3,maa:3,apr:4,mei:5,may:5,
+                  jun:6,jul:7,aug:8,sep:9,okt:10,oct:10,nov:11,dec:12};
+  const parts = str.toLowerCase().replace(/\./g,' ').split(/[\s,'/]+/).filter(Boolean);
+  let year = null, month = null;
+  parts.forEach(p => {
+    if(/^\d{4}$/.test(p)) year = parseInt(p);
+    const mo = months[p.slice(0,3)];
+    if(mo) month = mo;
+  });
+  if(!year || !month) return null;
+  return year + '-' + String(month).padStart(2,'0');
+}
+
+// ══ RENDER ══════════════════════════════════════════════════
+const _charts = {};
+function dc(id){ if(_charts[id]){ _charts[id].destroy(); delete _charts[id]; } }
+
+const CHART_DEFAULTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false },
+    tooltip: { backgroundColor:'#0a1c36', borderColor:'#1a3050', borderWidth:1,
+               titleColor:'#e8f0f8', bodyColor:'#8aa8c8', padding:10 }},
+  scales: {
+    x: { grid:{display:false}, ticks:{color:'#4a6880',font:{size:9}} },
+    y: { grid:{color:'#1a3050'}, ticks:{color:'#4a6880',font:{size:9},
+         callback: v => '€'+(Math.abs(v)>=1000?(v/1000).toFixed(0)+'k':v)} },
+  }
+};
+
+function buildHeader(){
+  const li = DATA.dates.length - 1;
+  const total = allTotal(li);
+  const prev  = allTotal(0);
+  const growth = prev > 0 ? ((total - prev) / prev * 100).toFixed(1) : '—';
+  const totalEst = KID_CONFIG.reduce((s, k) => s + projectedAt18(k.id), 0);
+
+  document.getElementById('lastUpdateLabel').textContent = DATA.dates[li] || '—';
+
+  const pills = [
+    {lbl:'Total savings', val:fmtE(total), sub:DATA.dates[li]},
+    {lbl:'Growth since start', val:'+'+growth+'%', sub:DATA.dates[0]+' → '+DATA.dates[li]},
+    {lbl:'Proj. total at 18', val:fmtE(totalEst), sub:'@ '+(DATA.returnRate||7)+'% p.a.'},
+    {lbl:'Kids', val:'4', sub:'Aiden · Charlie · Jonathan · Josephine'},
+  ];
+  const colors = ['var(--amber)','var(--green)','var(--cyan)','var(--t3)'];
+  document.getElementById('hdrKpis').innerHTML = pills.map((p,i) =>
+    `<div class="hk" style="border-top:2px solid ${colors[i]}">
+      <div class="hk-lbl" style="color:${colors[i]}">${p.lbl}</div>
+      <div class="hk-val">${p.val}</div>
+      <div class="hk-sub">${p.sub}</div>
+    </div>`
+  ).join('');
+}
+
+function buildKidCards(){
+  const li = DATA.dates.length - 1;
+  document.getElementById('kidCards').innerHTML = KID_CONFIG.map(cfg => {
+    const kd = DATA.kids[cfg.id];
+    const total = kidTotal(cfg.id, li);
+    const prev  = kidTotal(cfg.id, 0);
+    const growth = prev > 0 ? '+' + ((total-prev)/prev*100).toFixed(1)+'%' : '—';
+    const est18  = projectedAt18(cfg.id);
+    const age    = Math.floor(yearsTo18(cfg.dob)); // years remaining
+    const currentAge = Math.floor((new Date() - new Date(cfg.dob)) / (365.25*24*3600*1000));
+
+    const accRows = cfg.accounts.map((acc, i) => {
+      const v = kd.accounts[i] ? kd.accounts[i][li] : null;
+      return `<div class="kid-acc">
+        <span class="kid-acc-lbl">${acc.label}</span>
+        <span class="kid-acc-val">${v != null ? fmtE(v) : '—'}</span>
+      </div>`;
+    }).join('');
+
+    const yrs18 = yearsTo18(cfg.dob);
+    const progW = Math.min(100, Math.round((18 - yrs18) / 18 * 100));
+
+    return `<div class="kid-card" onclick="switchTab('${cfg.id}')">
+      <div class="kid-stripe" style="background:${cfg.color}"></div>
+      <div class="kid-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="kid-name">${cfg.name}</div>
+            <div class="kid-dob">b. ${cfg.dob} · age ${currentAge}</div>
+          </div>
+          <span style="font-size:11px;font-weight:600;font-family:var(--mono);color:${cfg.color}">${growth}</span>
+        </div>
+        <div class="kid-total" style="color:${cfg.color}">${fmtE(total)}</div>
+        <div class="kid-growth">${DATA.dates[li]}</div>
+        ${accRows}
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:9px;font-family:var(--mono);color:var(--t3);margin-bottom:4px">
+            <span>Age 18 in ${Math.round(yrs18*10)/10}y</span><span>${progW}%</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${progW}%;background:${cfg.color}"></div></div>
+        </div>
+        <div class="kid-est">
+          <span class="kid-est-lbl">Projected at 18</span>
+          <span class="kid-est-val" style="color:${cfg.color}">${fmtE(est18)}</span>
+        </div>
+        <div class="kid-age18" style="color:var(--t4)">@ ${DATA.returnRate||7}% p.a. · incl. €75/mo</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCharts(){
+  // Total over time chart
+  dc('total');
+  const labels = DATA.dates;
+  const datasets = KID_CONFIG.map(cfg => ({
+    label: cfg.name,
+    data: DATA.dates.map((_,i) => kidTotal(cfg.id, i)),
+    borderColor: cfg.color,
+    backgroundColor: cfg.color + '22',
+    borderWidth: 2,
+    pointRadius: 3,
+    fill: false,
+    tension: .3,
+  }));
+  // Add grand total
+  datasets.push({
+    label: 'Total',
+    data: DATA.dates.map((_,i) => allTotal(i)),
+    borderColor: '#e8f0f8',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderDash: [4,4],
+    pointRadius: 3,
+    fill: false,
+    tension: .3,
+  });
+  _charts['total'] = new Chart(document.getElementById('chartTotal'), {
+    type:'line',
+    data:{labels, datasets},
+    options:Object.assign({},CHART_DEFAULTS,{
+      plugins:Object.assign({},CHART_DEFAULTS.plugins,{
+        legend:{display:true,labels:{color:'#4a6880',font:{size:10},boxWidth:8,padding:10}},
+      })
+    })
+  });
+
+  // Projected at 18 bar chart
+  dc('projected');
+  _charts['projected'] = new Chart(document.getElementById('chartProjected'), {
+    type:'bar',
+    data:{
+      labels: KID_CONFIG.map(k=>k.name),
+      datasets:[{
+        data: KID_CONFIG.map(k => projectedAt18(k.id)),
+        backgroundColor: KID_CONFIG.map(k => k.color + '88'),
+        borderColor: KID_CONFIG.map(k => k.color),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options:Object.assign({},CHART_DEFAULTS,{
+      plugins:Object.assign({},CHART_DEFAULTS.plugins,{
+        tooltip:{...CHART_DEFAULTS.plugins.tooltip,
+          callbacks:{label:ctx=>' '+fmtE(ctx.raw)}}
+      })
+    })
+  });
+}
+
+function buildSummaryTable(){
+  const li = DATA.dates.length - 1;
+  let html = '';
+  KID_CONFIG.forEach(cfg => {
+    const kd = DATA.kids[cfg.id];
+    const total = kidTotal(cfg.id, li);
+    html += `<div class="stat-r">
+      <span class="stat-lbl" style="font-weight:700;color:${cfg.color}">${cfg.name}</span>
+      <span class="stat-val" style="color:${cfg.color}">${fmtE(total)}</span>
+    </div>`;
+    cfg.accounts.forEach((acc, i) => {
+      const v = kd.accounts[i] ? kd.accounts[i][li] : null;
+      html += `<div class="stat-r" style="padding-left:16px">
+        <span class="stat-lbl">${acc.label} <span class="acct-badge">${acc.acct}</span></span>
+        <span class="stat-val">${v != null ? fmtE(v) : '—'}</span>
+      </div>`;
+    });
+  });
+  const grandTotal = allTotal(li);
+  html += `<div class="stat-r" style="border-top:2px solid rgba(45,212,160,.2);margin-top:6px">
+    <span class="stat-lbl" style="font-weight:700;color:var(--t2)">Grand total</span>
+    <span class="stat-val" style="color:var(--green);font-size:16px">${fmtE(grandTotal)}</span>
+  </div>`;
+  document.getElementById('summaryTable').innerHTML = html;
+}
+
+function buildKidDetailTab(cfg){
+  const el = document.getElementById('tab-' + cfg.id);
+  if(!el) return;
+  const kd = DATA.kids[cfg.id];
+  const li = DATA.dates.length - 1;
+  const total = kidTotal(cfg.id, li);
+  const est18 = projectedAt18(cfg.id);
+  const currentAge = Math.floor((new Date() - new Date(cfg.dob)) / (365.25*24*3600*1000));
+  const yrs18 = yearsTo18(cfg.dob);
+
+  let accDetails = cfg.accounts.map((acc, i) => {
+    const vals = kd.accounts[i] || [];
+    const latest = vals[li];
+    const first  = vals[0];
+    const growth = first > 0 ? ((latest - first)/first*100).toFixed(1) : '—';
+    return `<div class="panel">
+      <div class="panel-hdr">
+        <span class="panel-title"><span class="accent" style="background:${cfg.color}"></span>${acc.label}</span>
+        <span class="acct-badge">${acc.acct}${acc.monthly ? ' · €'+acc.monthly+'/mo' : ''}</span>
+      </div>
+      ${DATA.dates.map((d, di) => `
+        <div class="stat-r">
+          <span class="stat-lbl">${d}</span>
+          <span class="stat-val">${vals[di] != null ? fmtE(vals[di]) : '—'}</span>
+        </div>`).join('')}
+      <div class="stat-r" style="border-top:1px solid var(--b2);margin-top:4px">
+        <span class="stat-lbl">Growth since ${DATA.dates[0]}</span>
+        <span class="stat-val" style="color:var(--green)">+${growth}%</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="g2">
+      <div class="panel">
+        <div class="panel-hdr"><span class="panel-title"><span class="accent" style="background:${cfg.color}"></span>${cfg.name} · Summary</span></div>
+        <div class="stat-r"><span class="stat-lbl">Date of birth</span><span class="stat-val">${cfg.dob}</span></div>
+        <div class="stat-r"><span class="stat-lbl">Current age</span><span class="stat-val">${currentAge}</span></div>
+        <div class="stat-r"><span class="stat-lbl">Years to 18</span><span class="stat-val">${(yrs18).toFixed(1)}</span></div>
+        <div class="stat-r"><span class="stat-lbl">Total savings (${DATA.dates[li]})</span><span class="stat-val" style="color:${cfg.color}">${fmtE(total)}</span></div>
+        <div class="stat-r"><span class="stat-lbl">Projected at age 18</span><span class="stat-val" style="color:var(--green)">${fmtE(est18)}</span></div>
+        <div class="stat-r"><span class="stat-lbl">BrandNewDay est. at 18 (sum)</span><span class="stat-val">${fmtE(projectedAt18(cfg.id))}</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr"><span class="panel-title">Total over time</span></div>
+        <div class="chart-h200"><canvas id="chart_${cfg.id}"></canvas></div>
+      </div>
+    </div>
+    <div class="g2" style="margin-top:0">${accDetails}</div>`;
+
+  // Build per-kid chart
+  setTimeout(() => {
+    dc('chart_'+cfg.id);
+    const canvas = document.getElementById('chart_'+cfg.id);
+    if(!canvas) return;
+    _charts['chart_'+cfg.id] = new Chart(canvas, {
+      type:'bar',
+      data:{
+        labels: DATA.dates,
+        datasets: cfg.accounts.map((acc, i) => ({
+          label: acc.label,
+          data: (kd.accounts[i] || []),
+          backgroundColor: cfg.color + (i===0?'bb':i===1?'77':'44'),
+          borderColor: cfg.color,
+          borderWidth: 1,
+          stack: 'a',
+          borderRadius: 2,
+        }))
+      },
+      options:Object.assign({},CHART_DEFAULTS,{
+        plugins:Object.assign({},CHART_DEFAULTS.plugins,{
+          legend:{display:true,labels:{color:'#4a6880',font:{size:10},boxWidth:8,padding:8}}
+        }),
+        scales:Object.assign({},CHART_DEFAULTS.scales,{
+          x:{...CHART_DEFAULTS.scales.x, stacked:true},
+          y:{...CHART_DEFAULTS.scales.y, stacked:true},
+        })
+      })
+    });
+  }, 50);
+}
+
+function buildHistory(){
+  const dates = DATA.dates;
+  let html = `<thead><tr>
+    <th style="text-align:left">Account</th>
+    ${dates.map(d=>`<th>${d}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  KID_CONFIG.forEach(cfg => {
+    const kd = DATA.kids[cfg.id];
+    // Kid section row
+    html += `<tr class="kid-section"><td colspan="${dates.length+1}" style="color:${cfg.color}">${cfg.name}</td></tr>`;
+    cfg.accounts.forEach((acc, i) => {
+      const vals = kd.accounts[i] || [];
+      html += `<tr>
+        <td>${acc.label} <span class="acct-badge">${acc.acct}</span></td>
+        ${dates.map((_,di) => `<td>${vals[di] != null ? fmtE(vals[di]) : '—'}</td>`).join('')}
+      </tr>`;
+    });
+    // Kid total row
+    html += `<tr class="total-row">
+      <td>${cfg.name} total</td>
+      ${dates.map((_,di) => `<td>${fmtE(kidTotal(cfg.id, di))}</td>`).join('')}
+    </tr>`;
+  });
+
+  // Grand total
+  html += `<tr class="total-row" style="background:rgba(45,212,160,.06)">
+    <td style="color:var(--green)">Grand total</td>
+    ${dates.map((_,di) => `<td style="color:var(--green)">${fmtE(allTotal(di))}</td>`).join('')}
+  </tr>`;
+
+  html += '</tbody>';
+  document.getElementById('histTable').innerHTML = html;
+}
+
+// ══ EDITOR ══════════════════════════════════════════════════
+function openEditor(){
+  const li = DATA.dates.length - 1;
+  document.getElementById('ed_date').value = DATA.dates[li] || '';
+  document.getElementById('newDateNotice').style.display = 'none';
+
+  let html = '';
+  KID_CONFIG.forEach(cfg => {
+    const kd = DATA.kids[cfg.id];
+    html += `<div class="modal-section">
+      <div class="modal-kid-title" style="color:${cfg.color}">${cfg.name}</div>`;
+    cfg.accounts.forEach((acc, i) => {
+      const v = kd.accounts[i] ? kd.accounts[i][li] : '';
+      html += `<div class="modal-row">
+        <span class="modal-lbl">${acc.label}<small>${acc.acct}</small></span>
+        <input class="modal-input" id="ed_${cfg.id}_${i}" type="number" value="${v||''}">
+      </div>`;
+    });
+    html += `<div class="modal-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(26,48,80,.3)">
+      <span class="modal-lbl">BrandNewDay projected at 18<small>Update if BND revises estimate</small></span>
+      <input class="modal-input" id="ed_${cfg.id}_est" type="number" value="${kd.estAt18||''}">
+    </div></div>`;
+  });
+
+  document.getElementById('editorFields').innerHTML = html;
+  document.getElementById('editorModal').classList.add('open');
+}
+
+function closeEditor(){
+  document.getElementById('editorModal').classList.remove('open');
+}
+
+function checkNewDate(){
+  const val = document.getElementById('ed_date').value.trim();
+  const li  = DATA.dates.length - 1;
+  const isNew = val && val !== DATA.dates[li];
+  document.getElementById('newDateNotice').style.display = isNew ? 'block' : 'none';
+}
+
+function saveEditor(){
+  const dateVal = document.getElementById('ed_date').value.trim();
+  if(!dateVal) return;
+
+  const li = DATA.dates.length - 1;
+  const isNew = dateVal !== DATA.dates[li];
+
+  if(isNew){
+    DATA.dates.push(dateVal);
+    KID_CONFIG.forEach(cfg => {
+      DATA.kids[cfg.id].accounts.forEach((_, i) => {
+        DATA.kids[cfg.id].accounts[i].push(null);
+      });
+    });
+  }
+
+  const newLi = DATA.dates.length - 1;
+  KID_CONFIG.forEach(cfg => {
+    cfg.accounts.forEach((_, i) => {
+      const v = parseFloat(document.getElementById(`ed_${cfg.id}_${i}`)?.value);
+      if(!isNaN(v)) DATA.kids[cfg.id].accounts[i][newLi] = v;
+    });
+    const est = parseFloat(document.getElementById(`ed_${cfg.id}_est`)?.value);
+    if(!isNaN(est)) DATA.kids[cfg.id].estAt18 = est;
+  });
+
+  DATA.returnRate = parseFloat(document.getElementById('returnRate')?.value) || 7;
+  persist(DATA);
+  writeCFFeeds();
+  closeEditor();
+  flashSave();
+  renderAll();
+}
+
+// ══ TABS & RENDER ══════════════════════════════════════════
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    if(b.textContent.trim().toLowerCase() === name.toLowerCase()) b.classList.add('active');
+  });
+  document.getElementById('tab-' + name).classList.add('active');
+
+  if(name === 'overview'){ buildCharts(); buildSummaryTable(); }
+  if(name === 'history')  buildHistory();
+  const cfg = KID_CONFIG.find(k => k.id === name);
+  if(cfg) buildKidDetailTab(cfg);
+}
+
+function renderAll(){
+  DATA.returnRate = parseFloat(document.getElementById('returnRate')?.value) || DATA.returnRate || 7;
+  buildHeader();
+  buildKidCards();
+  // Re-render active tab
+  const active = document.querySelector('.tab-panel.active');
+  if(active){
+    const id = active.id.replace('tab-','');
+    if(id === 'overview'){ buildCharts(); buildSummaryTable(); }
+    else if(id === 'history') buildHistory();
+    else { const cfg = KID_CONFIG.find(k => k.id === id); if(cfg) buildKidDetailTab(cfg); }
+  }
+}
+
+// ══ INIT ══════════════════════════════════════════════════
+loadData();
+if(document.getElementById('returnRate')) document.getElementById('returnRate').value = DATA.returnRate || 7;
+buildHeader();
+buildKidCards();
+buildCharts();
+buildSummaryTable();
+writeCFFeeds(); // push current data to CF on load
+</script>
+</body>
+</html>
