@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -365,22 +366,94 @@ const DEFAULT_DATA = {
   },
 };
 
+// ══ SUPABASE CLIENT (cross-device sync) ═══════════════════════
+const SB_URL = 'https://iptrnxjtatuydafnxdcz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwdHJueGp0YXR1eWRhZm54ZGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0Njg1NDMsImV4cCI6MjA5MTA0NDU0M30.hyB2Vsc66CNGSiX-X3s1FWLoVf8iWg7FBP-ub_mu9kk';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+// IBAN → (kid_id, account_index) for mapping Supabase rows to DATA.kids[].accounts[].
+const IBAN_TO_KID = {};
+KID_CONFIG.forEach(k => k.accounts.forEach((a, i) => { IBAN_TO_KID[a.acct] = { kid: k.id, idx: i }; }));
+
 // ══ DATA LAYER ════════════════════════════════════════════════
 let DATA;
-function loadData(){
+
+async function loadData(){
   try {
-    const s = localStorage.getItem(LS_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (parsed && parsed._version === DATA_VERSION) { DATA = parsed; return; }
+    const [balRes, estRes] = await Promise.all([
+      sb.from('bnd_account_balances')
+        .select('iban, date_label, value_eur')
+        .eq('account_kind', 'kid')
+        .order('date_label', { ascending: true }),
+      sb.from('bnd_kid_estimates')
+        .select('kid_id, scenario_index, value_eur'),
+    ]);
+    if (balRes.error) throw balRes.error;
+    if (estRes.error) throw estRes.error;
+    if (balRes.data?.length) {
+      const dates = [...new Set(balRes.data.map(r => r.date_label))];
+      const kids = {};
+      KID_CONFIG.forEach(k => {
+        kids[k.id] = {
+          estAt18: [0, 0, 0],
+          accounts: k.accounts.map(() => new Array(dates.length).fill(null)),
+        };
+      });
+      for (const r of balRes.data) {
+        const m = IBAN_TO_KID[r.iban];
+        if (!m) continue;
+        kids[m.kid].accounts[m.idx][dates.indexOf(r.date_label)] = Number(r.value_eur);
+      }
+      for (const r of (estRes.data || [])) {
+        if (kids[r.kid_id]) kids[r.kid_id].estAt18[r.scenario_index] = Number(r.value_eur);
+      }
+      DATA = { returnRate: 7.0, dates, kids };
+      return;
     }
-  } catch(e){}
+  } catch(e) {
+    console.warn('Supabase loadData failed, falling back to defaults:', e);
+  }
   DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  DATA._version = DATA_VERSION;
 }
-function persist(d){
-  d._version = DATA_VERSION;
-  try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){}
+
+async function persist(d){
+  // Upsert balances + estimates
+  const balRows = [];
+  KID_CONFIG.forEach(cfg => {
+    const kd = d.kids[cfg.id];
+    if (!kd) return;
+    cfg.accounts.forEach((acc, idx) => {
+      d.dates.forEach((dateLabel, di) => {
+        const v = kd.accounts[idx]?.[di];
+        if (v == null || isNaN(Number(v))) return;
+        balRows.push({
+          iban: acc.acct,
+          person: cfg.id,
+          account_label: acc.label,
+          account_kind: 'kid',
+          date_label: dateLabel,
+          value_eur: Number(v),
+          source: 'manual edit',
+        });
+      });
+    });
+  });
+  if (balRows.length) {
+    const { error } = await sb.from('bnd_account_balances').upsert(balRows, { onConflict: 'iban,date_label' });
+    if (error) console.error('persist balances:', error);
+  }
+  const estRows = [];
+  KID_CONFIG.forEach(cfg => {
+    const arr = d.kids[cfg.id]?.estAt18 || [];
+    arr.forEach((v, i) => {
+      if (v == null || isNaN(Number(v))) return;
+      estRows.push({ kid_id: cfg.id, scenario_index: i, value_eur: Number(v) });
+    });
+  });
+  if (estRows.length) {
+    const { error } = await sb.from('bnd_kid_estimates').upsert(estRows, { onConflict: 'kid_id,scenario_index' });
+    if (error) console.error('persist estimates:', error);
+  }
 }
 
 // ══ HELPERS ══════════════════════════════════════════════════
@@ -1121,13 +1194,15 @@ function exportPDF(){
 window.addEventListener('beforeprint', buildPrintView);
 
 // ══ INIT ══════════════════════════════════════════════════
-loadData();
-if(document.getElementById('returnRate')) document.getElementById('returnRate').value = DATA.returnRate || 7;
-buildHeader();
-buildKidCards();
-buildCharts();
-buildSummaryTable();
-writeCFFeeds(); // push current data to CF on load
+(async () => {
+  await loadData();
+  if(document.getElementById('returnRate')) document.getElementById('returnRate').value = DATA.returnRate || 7;
+  buildHeader();
+  buildKidCards();
+  buildCharts();
+  buildSummaryTable();
+  writeCFFeeds(); // push current data to CF on load
+})();
 </script>
 </body>
 </html>
