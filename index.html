@@ -321,6 +321,7 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
 // CONSTANTS
 // ══════════════════════════════════════════════════════════════
 const LS_KEY     = 'bnd_kids_v2';
+const DATA_VERSION = '2026-05-07';  // bump on every BND-scrape commit; triggers localStorage refresh
 const INV_CF_KEY = 'nijhuis_inv_cf_feeds';
 const INV_CF_TS  = 'nijhuis_inv_cf_feeds_ts';
 
@@ -367,10 +368,18 @@ const DEFAULT_DATA = {
 // ══ DATA LAYER ════════════════════════════════════════════════
 let DATA;
 function loadData(){
-  try { const s=localStorage.getItem(LS_KEY); if(s){ DATA=JSON.parse(s); return; } } catch(e){}
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed && parsed._version === DATA_VERSION) { DATA = parsed; return; }
+    }
+  } catch(e){}
   DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  DATA._version = DATA_VERSION;
 }
 function persist(d){
+  d._version = DATA_VERSION;
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){}
 }
 
