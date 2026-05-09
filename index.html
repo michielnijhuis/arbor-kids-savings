@@ -322,7 +322,7 @@ body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100
 // CONSTANTS
 // ══════════════════════════════════════════════════════════════
 const LS_KEY     = 'bnd_kids_v2';
-const DATA_VERSION = '2026-05-07';  // bump on every BND-scrape commit; triggers localStorage refresh
+const DATA_VERSION = '2026-05-09';  // bump on every BND-scrape commit; triggers localStorage refresh
 const INV_CF_KEY = 'nijhuis_inv_cf_feeds';
 const INV_CF_TS  = 'nijhuis_inv_cf_feeds_ts';
 
@@ -391,7 +391,8 @@ async function loadData(){
     if (balRes.error) throw balRes.error;
     if (estRes.error) throw estRes.error;
     if (balRes.data?.length) {
-      const dates = [...new Set(balRes.data.map(r => r.date_label))];
+      const dates = [...new Set(balRes.data.map(r => r.date_label))]
+        .sort((a, b) => parseDateLabel(a) - parseDateLabel(b));
       const kids = {};
       KID_CONFIG.forEach(k => {
         kids[k.id] = {
