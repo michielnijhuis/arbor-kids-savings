@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#020c1a;--s1:#071428;--s2:#0a1c36;--s3:#0f2444;
@@ -17,7 +17,8 @@
   --t1:#e8f0f8;--t2:#8aa8c8;--t3:#4a6880;--t4:#2a4060;
   --blue:#4d9ef8;--green:#2dd4a0;--amber:#f4b942;--red:#f06868;
   --violet:#9b7ff4;--cyan:#3ecfcf;--orange:#fb923c;--pink:#f472b6;
-  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --teal:#2dd4c2;--teal-soft:#00b5a5;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;--sans:'Inter',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
 }
 body{background:var(--bg);color:var(--t2);font-family:var(--sans);min-height:100vh;padding-bottom:60px}
 
@@ -1157,7 +1158,7 @@ function exportPDF(){
     display:block;background:#020c1a;color:#e8f0f8;
     padding:9mm 10mm;width:794px;min-height:1123px;
     position:fixed;left:0;top:0;z-index:-1;opacity:0;
-    font-family:'IBM Plex Sans',sans-serif;
+    font-family:'Inter',sans-serif;
   `;
 
   // Allow layout to settle
@@ -1171,7 +1172,7 @@ function exportPDF(){
       onclone: (clonedDoc) => {
         const c = clonedDoc.getElementById('printView');
         if (c) {
-          c.style.cssText = 'display:block;background:#020c1a;color:#e8f0f8;padding:9mm 10mm;width:794px;min-height:1123px;position:relative;left:0;top:0;opacity:1;z-index:auto;font-family:"IBM Plex Sans",sans-serif;';
+          c.style.cssText = 'display:block;background:#020c1a;color:#e8f0f8;padding:9mm 10mm;width:794px;min-height:1123px;position:relative;left:0;top:0;opacity:1;z-index:auto;font-family:"Inter",sans-serif;';
         }
       }
     }).then(canvas => {
